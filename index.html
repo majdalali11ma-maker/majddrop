@@ -88,7 +88,7 @@
     </div>
 
     <script>
-        const CHUNK_SIZE = 128 * 1024; // مضاعفة حجم القطعة لتسريع النقل العابر للحدود
+        const CHUNK_SIZE = 64 * 1024; // الحجم الأمثل للمسافات البعيدة والدول المختلفة
         let peer = null;
         let connection = null;
         let selectedFile = null;
@@ -126,10 +126,8 @@
                     'iceServers': [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
                         { urls: 'stun:stun.cloudflare.com:3478' }
-                    ],
-                    'iceTransportPolicy': 'all'
+                    ]
                 }
             });
 
@@ -146,7 +144,7 @@
 
             peer.on('error', (err) => {
                 console.error("PeerJS Error:", err);
-                statusTxt.innerText = "خطأ في الاتصال الدولي!";
+                statusTxt.innerText = "خطأ في الاتصال!";
                 statusTxt.classList.replace('text-sky-300', 'text-red-400');
             });
         }
@@ -185,7 +183,7 @@
                 progressSection.classList.remove('hidden');
 
                 if (!isReceiver && selectedFile) {
-                    statusTxt.innerText = "جاري الإرسال الدولي...";
+                    statusTxt.innerText = "جاري الإرسال العابر للقارات...";
                     startSendingFile();
                 } else {
                     statusTxt.innerText = "جاري استقبال البيانات...";
@@ -200,7 +198,7 @@
                     receivedBytes = 0;
                     receivedBuffers = [];
                     transferStartTime = Date.now();
-                    statusTxt.innerText = "جاري التحميل العابر للقارات...";
+                    statusTxt.innerText = "جاري التحميل...";
                 } 
                 else if (data.type === 'chunk') {
                     receivedBuffers.push(data.chunk);
@@ -229,12 +227,13 @@
             function readSlice() {
                 if (offset >= selectedFile.size) {
                     connection.send({ type: 'done' });
-                    statusTxt.innerText = "اكتمل الإرسال الدولي بنجاح! ✅";
+                    statusTxt.innerText = "اكتمل الإرسال بنجاح! ✅";
                     return;
                 }
 
-                if (connection.dataChannel.bufferedAmount > 8 * 1024 * 1024) {
-                    setTimeout(readSlice, 20);
+                // إرسال تدفق سلس ومتوازن بدون ازدحام
+                if (connection.dataChannel.bufferedAmount > 2 * 1024 * 1024) {
+                    setTimeout(readSlice, 15);
                     return;
                 }
 
